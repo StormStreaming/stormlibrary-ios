@@ -8,31 +8,22 @@
 import Foundation
 import AVKit
 
-open class StormLibrary{
-     
-    private var config : StormConfig
+open class StormLibrary : ObservableObject{
+    
+    private var sources : [StormSource] = []
     private var selectedSource : StormSource?
     private var stormWebSocket : StormWebSocket = StormWebSocket()
     private var observations = [ObjectIdentifier : Observation]()
     
-    public enum EventType {
-        case onVideoConnecting
-        case onVideoMetaData(VideoMetaData)
-        case onVideoConnectionError(Error)
-        case onVideoPlay
-        case onVideoPause
-        case onVideoStop
-        case onVideoSeek(UInt64)
-    }
-    
-    public init(config : StormConfig) {
-        self.config = config
-    }
-    
     public let avPlayer : AVPlayer = AVPlayer(url: URL(string: "https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8")!)
     
     public var isPlaying: Bool {
-        return avPlayer.rate != 0 && avPlayer.error == nil
+            return avPlayer.rate != 0 && avPlayer.error == nil
+        }
+
+    
+    public init(sources : [StormSource]) {
+        self.sources = sources
     }
     
     public func play() throws{
@@ -67,13 +58,13 @@ open class StormLibrary{
     }
     
     public func prepare() throws{
-        if config.sources.count == 0{
+        if sources.count == 0{
             throw SourceError.sourceListIsEmptyError("Source list is empty")
         }
         
         var defaultSource : StormSource?
         
-        for source in config.sources{
+        for source in sources{
             
             if(source.isDefault){
                 defaultSource = source
@@ -83,10 +74,10 @@ open class StormLibrary{
         }
         
         if defaultSource == nil{
-            defaultSource = config.sources[0]
+            defaultSource = sources[0]
         }
         
-        selectSource(source: defaultSource!, play: config.autostart)
+        selectSource(source: defaultSource!)
         
     }
     

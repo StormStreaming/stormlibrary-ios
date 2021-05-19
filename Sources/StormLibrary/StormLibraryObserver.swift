@@ -26,4 +26,14 @@ public extension StormLibraryObserver {
     func onVideoSeek(streamSeekUnixTime : UInt64){}
 }
 
-
+public extension StormLibrary{
+    enum EventType {
+        case onVideoConnecting
+        case onVideoMetaData(VideoMetaData)
+        case onVideoConnectionError(Error)
+        case onVideoPlay
+        case onVideoPause
+        case onVideoStop
+        case onVideoSeek(UInt64)
+    }
+}
