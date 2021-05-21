@@ -13,16 +13,15 @@ open class StormLibrary{
     
     public var stormMediaItems : [StormMediaItem] = []
     
-    private var stormWebSocket : StormWebSocket = StormWebSocket()
+    private var stormWebSocket : StormWebSocket!
     private var observations = [ObjectIdentifier : Observation]()
     
-    public let avPlayer : AVPlayer = AVPlayer(url: URL(string: "https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8")!)
+    //private let avPlayer : AVPlayer = AVPlayer(url: URL(string: "https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8")!)
     
-    public var isPlaying: Bool {
-        return avPlayer.rate != 0 && avPlayer.error == nil
-    }
+    private let avPlayer : AVPlayer = AVPlayer()
 
     public init(stormMediaItems : [StormMediaItem]) {
+        self.stormWebSocket = StormWebSocket(stormLibrary: self)
         for(_, item) in stormMediaItems.enumerated(){
             addStormMediaItem(stormMediaItem: item)
         }
@@ -101,6 +100,22 @@ open class StormLibrary{
             }
         }
         return nil
+    }
+    
+    public func isPlaying() -> Bool{
+        return avPlayer.rate != 0 && avPlayer.error == nil
+    }
+    
+    public func getAvPlayer() -> AVPlayer{
+        return avPlayer;
+    }
+    
+    public func setAvPlayerURL(urlString: String){
+        let url = URL(string: urlString)
+        let asset = AVAsset(url: url!)
+        let playerItem = AVPlayerItem(asset: asset)
+        
+        avPlayer.replaceCurrentItem(with: playerItem)
     }
     
     public func dispatchEvent(_ eventType : EventType, object : Any? = nil){

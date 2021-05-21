@@ -9,7 +9,6 @@ import SwiftUI
 import Starscream
 import os.log
 
-
 public class StormWebSocket: WebSocketDelegate{
     
     public var isConnected : Bool = false
@@ -17,6 +16,11 @@ public class StormWebSocket: WebSocketDelegate{
     public var stormMediaItem : StormMediaItem?
     
     private var playAfterConnect = false
+    private var stormLibrary : StormLibrary
+    
+    public init(stormLibrary : StormLibrary){
+        self.stormLibrary = stormLibrary
+    }
     
     public func connect(stormMediaItem: StormMediaItem, playAfterConnect : Bool = false){
         self.stormMediaItem = stormMediaItem
@@ -40,6 +44,16 @@ public class StormWebSocket: WebSocketDelegate{
             isConnected = true
             stormMediaItem!.isConnectedToWebSocket = true
             os_log("WebSocket is connected", log: OSLog.stormLibrary, type: .info)
+            
+            stormLibrary.setAvPlayerURL(urlString: "https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8")
+            if playAfterConnect{
+                do{
+                    try stormLibrary.play()
+                } catch let error {
+                    os_log("Play error: %@", log: OSLog.stormLibrary, type: .error, String(describing: error))
+                }
+            }
+            
         case .disconnected(let reason, let code):
             isConnected = false
             stormMediaItem!.isConnectedToWebSocket = false
@@ -48,7 +62,8 @@ public class StormWebSocket: WebSocketDelegate{
             //print("Received text: \(string)")
             break
         case .binary(let data):
-            print("Received data: \(data.count)")
+            //print("Received data: \(data.count)")
+            break
         case .ping(_):
             break
         case .pong(_):
