@@ -8,33 +8,35 @@
 import Foundation
 import AVKit
 
-open class StormLibrary : ObservableObject{
+open class StormLibrary{
     
-    private var sources : [StormSource] = []
-    private var selectedSource : StormSource?
+    public var stormMediaItems : [StormMediaItem] = []
+    
     private var stormWebSocket : StormWebSocket = StormWebSocket()
     private var observations = [ObjectIdentifier : Observation]()
     
     public let avPlayer : AVPlayer = AVPlayer(url: URL(string: "https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8")!)
     
     public var isPlaying: Bool {
-            return avPlayer.rate != 0 && avPlayer.error == nil
-        }
+        return avPlayer.rate != 0 && avPlayer.error == nil
+    }
 
-    
-    public init(sources : [StormSource]) {
-        self.sources = sources
+    public init(stormMediaItems : [StormMediaItem]) {
+        for(_, item) in stormMediaItems.enumerated(){
+            addStormMediaItem(stormMediaItem: item)
+        }
     }
     
     public func play() throws{
         
-        guard let source = selectedSource else{
-            throw SourceError.sourceNotSelectedError("No source was selected")
+        guard let stormMediaItem = getSelectedStormMediaItem() else{
+            throw SourceError.sourceNotSelectedError("No StormMediaItem was selected")
         }
         
-        if !stormWebSocket.isConnected{
-            stormWebSocket.connect(source: source, playAfterConnect: true)
+        if !stormMediaItem.isConnectedToWebSocket{
+            stormWebSocket.connect(stormMediaItem: stormMediaItem, playAfterConnect: true)
         }else{
+            dispatchEvent(.onStormMediaItemPlay, object: stormMediaItem)
             avPlayer.play()
             dispatchEvent(.onVideoPlay)
         }
@@ -51,34 +53,47 @@ open class StormLibrary : ObservableObject{
         dispatchEvent(.onVideoStop)
     }
     
-    public func selectSource(source : StormSource, play : Bool = false){
-        stormWebSocket.disconnect()
-        selectedSource = source
-        stormWebSocket.connect(source: selectedSource!, playAfterConnect: play)
+    public func addStormMediaItem(stormMediaItem: StormMediaItem){
+        stormMediaItems.append(stormMediaItem)
+        dispatchEvent(.onStormMediaItemAdded, object: stormMediaItem)
+        if stormMediaItem.isSelected {
+            selectStormMediaItem(stormMediaItem: stormMediaItem)
+        }
     }
     
-    public func prepare() throws{
-        if sources.count == 0{
-            throw SourceError.sourceListIsEmptyError("Source list is empty")
+    public func removeStormMediaItem(stormMediaItem: StormMediaItem){
+
+        if let index = stormMediaItems.firstIndex(where: {$0 === stormMediaItem}) {
+            stormMediaItems.remove(at: index)
+            dispatchEvent(.onStormMediaItemRemoved, object: stormMediaItem)
         }
+        if stormMediaItem.isConnectedToWebSocket{
+            stormWebSocket.disconnect()
+        }
+ 
+    }
+    
+    public func selectStormMediaItem(stormMediaItem : StormMediaItem, play : Bool = false){
+        stormWebSocket.disconnect()
         
-        var defaultSource : StormSource?
-        
-        for source in sources{
-            
-            if(source.isDefault){
-                defaultSource = source
-                break
+        for (_, item) in stormMediaItems.enumerated(){
+            if item.isSelected{
+                item.isSelected = false
             }
-            
         }
+        stormMediaItem.isSelected = true
+        dispatchEvent(.onStormMediaItemSelect, object: stormMediaItem)
         
-        if defaultSource == nil{
-            defaultSource = sources[0]
+        stormWebSocket.connect(stormMediaItem: stormMediaItem, playAfterConnect: play)
+    }
+    
+    public func getSelectedStormMediaItem() -> StormMediaItem?{
+        for (_, stormMediaItem) in stormMediaItems.enumerated(){
+            if stormMediaItem.isSelected{
+                return stormMediaItem
+            }
         }
-        
-        selectSource(source: defaultSource!)
-        
+        return nil
     }
     
     public func dispatchEvent(_ eventType : EventType, object : Any? = nil){
@@ -91,6 +106,18 @@ open class StormLibrary : ObservableObject{
             switch eventType {
                 case .onVideoPlay:
                     observer.onVideoPlay()
+                case .onVideoPause:
+                    observer.onVideoPause()
+                case .onVideoStop:
+                    observer.onVideoStop()
+                case .onStormMediaItemAdded:
+                    observer.onStormMediaItemAdded(stormMediaItem: (object as? StormMediaItem)!)
+                case .onStormMediaItemRemoved:
+                    observer.onStormMediaItemRemoved(stormMediaItem: (object as? StormMediaItem)!)
+                case .onStormMediaItemSelect:
+                    observer.onStormMediaItemSelect(stormMediaItem: (object as? StormMediaItem)!)
+                case .onStormMediaItemPlay:
+                    observer.onStormMediaItemPlay(stormMediaItem: (object as? StormMediaItem)!)
                 default:
                     break;
             }
@@ -110,5 +137,6 @@ open class StormLibrary : ObservableObject{
     public struct Observation {
         weak var observer: StormLibraryObserver?
     }
+    
     
 }
