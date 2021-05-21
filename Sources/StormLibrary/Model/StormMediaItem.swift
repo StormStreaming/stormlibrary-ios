@@ -8,7 +8,7 @@
 import SwiftUI
 
 
-public class StormMediaItem{
+public class StormMediaItem : CustomStringConvertible{
     
     public var host : String
     public var port : Int
@@ -38,6 +38,15 @@ public class StormMediaItem{
         self.init(host: host, port: port, isSSL: isSSL, applicationName: applicationName, streamName: streamName, label: label, isSelected: isSelected)
         self.rtmpHost = rtmpHost
         self.rtmpApplicationName = rtmpApplicationName
+    }
+    
+    public var description: String {
+        return "[host: \(host), port: \(port), isSSL: \(isSSL), streamName: \(streamName), applicationName: \(applicationName), label: \(label), rtmpHost: \(String(describing: rtmpHost)), rtmpApplicationName: \(String(describing:rtmpApplicationName)), isSelected: \(isSelected), isConnectedToWebSocket: \(isConnectedToWebSocket)]"
+        
+    }
+    
+    public func getWebSocketURL() -> String{
+        return "https://asdasd"
     }
     
     

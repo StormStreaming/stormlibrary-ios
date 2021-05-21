@@ -7,6 +7,7 @@
 
 import Foundation
 import AVKit
+import os.log
 
 open class StormLibrary{
     
@@ -39,23 +40,27 @@ open class StormLibrary{
             dispatchEvent(.onStormMediaItemPlay, object: stormMediaItem)
             avPlayer.play()
             dispatchEvent(.onVideoPlay)
+            os_log("Play", log: OSLog.stormLibrary, type: .info)
         }
     }
     
     public func pause(){
         avPlayer.pause()
         dispatchEvent(.onVideoPause)
+        os_log("Pause", log: OSLog.stormLibrary, type: .info)
     }
     
     public func stop(){
         stormWebSocket.disconnect()
         avPlayer.replaceCurrentItem(with: nil)
         dispatchEvent(.onVideoStop)
+        os_log("Stop", log: OSLog.stormLibrary, type: .info)
     }
     
     public func addStormMediaItem(stormMediaItem: StormMediaItem){
         stormMediaItems.append(stormMediaItem)
         dispatchEvent(.onStormMediaItemAdded, object: stormMediaItem)
+        os_log("Add StormMediaItem: %@", log: OSLog.stormLibrary, type: .info, stormMediaItem.description)
         if stormMediaItem.isSelected {
             selectStormMediaItem(stormMediaItem: stormMediaItem)
         }
@@ -66,6 +71,7 @@ open class StormLibrary{
         if let index = stormMediaItems.firstIndex(where: {$0 === stormMediaItem}) {
             stormMediaItems.remove(at: index)
             dispatchEvent(.onStormMediaItemRemoved, object: stormMediaItem)
+            os_log("Remove StormMediaItem: %@", log: OSLog.stormLibrary, type: .info, stormMediaItem.description)
         }
         if stormMediaItem.isConnectedToWebSocket{
             stormWebSocket.disconnect()
@@ -83,6 +89,7 @@ open class StormLibrary{
         }
         stormMediaItem.isSelected = true
         dispatchEvent(.onStormMediaItemSelect, object: stormMediaItem)
+        os_log("Select StormMediaItem: %@", log: OSLog.stormLibrary, type: .info, stormMediaItem.description)
         
         stormWebSocket.connect(stormMediaItem: stormMediaItem, playAfterConnect: play)
     }

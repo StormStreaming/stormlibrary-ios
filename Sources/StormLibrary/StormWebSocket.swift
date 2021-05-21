@@ -25,13 +25,12 @@ public class StormWebSocket: WebSocketDelegate{
 
         var request = URLRequest(url: URL(string: "wss://stormdev.web-anatomy.com:443/storm/stream/?url=rtmp%3A%2F%2Fstormdev.web-anatomy.com%3A1935%2Flive&stream=test_hd&")!) //https://localhost:8080
         
-        print("Łączę z "+stormMediaItem.host)
-        
-        
         request.timeoutInterval = 5
         socket = WebSocket(request: request)
         socket.delegate = self
         socket.connect()
+        
+        os_log("WebSocket is connecting to: %@", log: OSLog.stormLibrary, type: .info, stormMediaItem.getWebSocketURL())
         
     }
     
@@ -40,11 +39,11 @@ public class StormWebSocket: WebSocketDelegate{
         case .connected(let headers):
             isConnected = true
             stormMediaItem!.isConnectedToWebSocket = true
-            print("websocket is connected: \(headers)")
+            os_log("WebSocket is connected", log: OSLog.stormLibrary, type: .info)
         case .disconnected(let reason, let code):
             isConnected = false
             stormMediaItem!.isConnectedToWebSocket = false
-            print("websocket is disconnected: \(reason) with code: \(code)")
+            os_log("WebSocket disconnected: %@ %@", log: OSLog.stormLibrary, type: .info, reason, code)
         case .text(let string):
             //print("Received text: \(string)")
             break
@@ -69,19 +68,11 @@ public class StormWebSocket: WebSocketDelegate{
     private func handleError(_ error: Error?) {
         stormMediaItem!.isConnectedToWebSocket = false
             if let e = error as? WSError {
-                if #available(iOS 14.0, *) {
-                    os_log("StormLibrary error: websocket encountered an error: \(e.message)")
-                } else {
-                    os_log("StormLibrary error: websocket encountered an error")
-                }
+                os_log("WebSocket encountered an error: %@", log: OSLog.stormLibrary, type: .error, e.message)
             } else if let e = error {
-                if #available(iOS 14.0, *) {
-                    os_log("StormLibrary error: websocket encountered an error: \(e.localizedDescription)")
-                } else {
-                    os_log("StormLibrary error: websocket encountered an error")
-                }
+                    os_log("WebSocket encountered an error: %@", log: OSLog.stormLibrary, type: .error, e.localizedDescription)
             } else {
-                os_log("StormLibrary error: websocket encountered an error")
+                os_log("WebSocket encountered an error", log: OSLog.stormLibrary, type: .error)
             }
         }
     
@@ -89,7 +80,7 @@ public class StormWebSocket: WebSocketDelegate{
         if socket != nil{
             socket.disconnect()
             stormMediaItem!.isConnectedToWebSocket = false
-            print("websocket is disconnected")
+            os_log("WebSocket disconnected", log: OSLog.stormLibrary, type: .info)
         }
     }
     
