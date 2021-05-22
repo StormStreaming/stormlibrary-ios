@@ -13,7 +13,7 @@ public class StormWebSocket: WebSocketDelegate{
     
     public var isConnected : Bool = false
     public var socket : WebSocket!
-    public var stormMediaItem : StormMediaItem?
+    public var stormMediaItem : StormMediaItem!
     
     private var playAfterConnect = false
     private var stormLibrary : StormLibrary
@@ -29,6 +29,7 @@ public class StormWebSocket: WebSocketDelegate{
 
         var request = URLRequest(url: URL(string: "wss://stormdev.web-anatomy.com:443/storm/stream/?url=rtmp%3A%2F%2Fstormdev.web-anatomy.com%3A1935%2Flive&stream=test_hd&")!) //https://localhost:8080
         
+        stormLibrary.dispatchEvent(.onVideoConnecting)
         request.timeoutInterval = 5
         socket = WebSocket(request: request)
         socket.delegate = self
@@ -42,10 +43,10 @@ public class StormWebSocket: WebSocketDelegate{
             switch event {
         case .connected(let headers):
             isConnected = true
-            stormMediaItem!.isConnectedToWebSocket = true
+            stormMediaItem.isConnectedToWebSocket = true
             os_log("WebSocket is connected", log: OSLog.stormLibrary, type: .info)
             
-            stormLibrary.setAvPlayerURL(urlString: "https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8")
+            stormLibrary.setURLToAvPlayer(urlString: "https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8")
             if playAfterConnect{
                 do{
                     try stormLibrary.play()
@@ -56,10 +57,11 @@ public class StormWebSocket: WebSocketDelegate{
             
         case .disconnected(let reason, let code):
             isConnected = false
-            stormMediaItem!.isConnectedToWebSocket = false
+            stormMediaItem.isConnectedToWebSocket = false
             os_log("WebSocket disconnected: %@ %@", log: OSLog.stormLibrary, type: .info, reason, code)
         case .text(let string):
             //print("Received text: \(string)")
+            parseMessage(message: string)
             break
         case .binary(let data):
             //print("Received data: \(data.count)")
@@ -74,14 +76,77 @@ public class StormWebSocket: WebSocketDelegate{
             break
         case .cancelled:
             isConnected = false
+            stormMediaItem.isConnectedToWebSocket = false
+            os_log("WebSocket disconnected: cancelled", log: OSLog.stormLibrary, type: .info)
         case .error(let error):
             isConnected = false
+            stormMediaItem.isConnectedToWebSocket = false
             handleError(error)
         }
     }
     
+    private func parseMessage(message : String){
+        
+        let jsonData = message.data(using: .utf8)!
+    
+        
+        do{
+            let packetTypePacket = try JSONDecoder().decode(PacketTypePacket.self, from: jsonData)
+        
+            switch packetTypePacket.packetType{
+                case .serverData:
+                    let serverDataPacket = try! JSONDecoder().decode(ServerDataPacket.self, from: jsonData)
+                    
+                    os_log("Storm Server: %@ | Version: %@ | PlayerProtocolVersion: %@ | ServerProtocolVersion: %@", log: OSLog.stormLibrary, type: .info, serverDataPacket.data.serverName,
+                           serverDataPacket.data.serverVersion, String(StormLibrary.PLAYER_PROTOCOL_VERSION), String(serverDataPacket.data.playerProtocol))
+                    
+                    if serverDataPacket.data.playerProtocol != StormLibrary.PLAYER_PROTOCOL_VERSION{
+                        stormLibrary.dispatchEvent(.onIncompatiblePlayerProtocol)
+                    }
+                    break;
+                case .streamStatus:
+                    let streamStatusPacket = try! JSONDecoder().decode(StreamStatusPacket.self, from: jsonData)
+                
+                    
+                    break;
+                case .metaData:
+                    let metaDataPacket = try! JSONDecoder().decode(MetaDataPacket.self, from: jsonData)
+                    
+                    stormLibrary.dispatchEvent(.onVideoMetaData, object: metaDataPacket.data)
+                
+                    print(metaDataPacket.data.audioChannels)
+                case .timeData:
+                    let timeDataPacket = try! JSONDecoder().decode(TimeDataPacket.self, from: jsonData)
+                
+                    stormLibrary.dispatchEvent(.onVideoProgress, object: timeDataPacket.data)
+                case .event:
+                    let eventPacket = try! JSONDecoder().decode(EventPacket.self, from: jsonData)
+                
+                    switch eventPacket.data.eventName{
+                        case "StreamNotFound":
+                            stormLibrary.dispatchEvent(.onVideoNotFound)
+                            disconnect()
+                            break;
+                        case "StreamUnpublished":
+                            stormLibrary.dispatchEvent(.onVideoStop)
+                            disconnect()
+                            break;
+                        case "newVideo":
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+            }
+        
+        }catch{
+            os_log("WebSocket parse message error: %@", log: OSLog.stormLibrary, type: .error, error.localizedDescription)
+        }
+    }
+    
     private func handleError(_ error: Error?) {
-        stormMediaItem!.isConnectedToWebSocket = false
+        stormLibrary.dispatchEvent(.onVideoConnectionError, object: error)
+        stormMediaItem.isConnectedToWebSocket = false
             if let e = error as? WSError {
                 os_log("WebSocket encountered an error: %@", log: OSLog.stormLibrary, type: .error, e.message)
             } else if let e = error {
@@ -94,7 +159,7 @@ public class StormWebSocket: WebSocketDelegate{
     public func disconnect(){
         if socket != nil{
             socket.disconnect()
-            stormMediaItem!.isConnectedToWebSocket = false
+            stormMediaItem.isConnectedToWebSocket = false
             os_log("WebSocket disconnected", log: OSLog.stormLibrary, type: .info)
         }
     }

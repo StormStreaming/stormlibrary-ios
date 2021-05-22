@@ -11,6 +11,8 @@ import os.log
 
 open class StormLibrary{
     
+    public static let PLAYER_PROTOCOL_VERSION = 1
+    
     public var stormMediaItems : [StormMediaItem] = []
     
     private var stormWebSocket : StormWebSocket!
@@ -110,7 +112,7 @@ open class StormLibrary{
         return avPlayer;
     }
     
-    public func setAvPlayerURL(urlString: String){
+    public func setURLToAvPlayer(urlString: String){
         let url = URL(string: urlString)
         let asset = AVAsset(url: url!)
         let playerItem = AVPlayerItem(asset: asset)
@@ -126,22 +128,60 @@ open class StormLibrary{
                 continue
             }
             switch eventType {
+                case .onVideoMetaData:
+                    observer.onVideoMetaData(videoMetaData: (object as? MetaDataPacket.MetaData)!)
+                    break
+                case .onVideoProgress:
+                    observer.onVideoProgress(videoTimeData: (object as? TimeDataPacket.TimeData)!)
+                    break
                 case .onVideoPlay:
                     observer.onVideoPlay()
+                    break
                 case .onVideoPause:
                     observer.onVideoPause()
+                    break
                 case .onVideoStop:
                     observer.onVideoStop()
+                    break
                 case .onStormMediaItemAdded:
                     observer.onStormMediaItemAdded(stormMediaItem: (object as? StormMediaItem)!)
+                    break
                 case .onStormMediaItemRemoved:
                     observer.onStormMediaItemRemoved(stormMediaItem: (object as? StormMediaItem)!)
+                    break
                 case .onStormMediaItemSelect:
                     observer.onStormMediaItemSelect(stormMediaItem: (object as? StormMediaItem)!)
+                    break
                 case .onStormMediaItemPlay:
                     observer.onStormMediaItemPlay(stormMediaItem: (object as? StormMediaItem)!)
-                default:
+                    break
+                case .onIncompatiblePlayerProtocol:
+                    observer.onIncompatiblePlayerProtocol()
+                    break
+                case .onVideoNotFound:
+                    observer.onVideoNotFound()
                     break;
+                case .onGatewayGroupNameNotFound:
+                    observer.onGatewayGroupNameNotFound()
+                    break
+                case .onGatewayConnectionError:
+                    observer.onGatewayConnectionError()
+                    break
+                case .onVideoConnectionError:
+                    observer.onVideoConnectionError(error: (object as? Error)!)
+                break;
+                case .onVideoConnecting:
+                    observer.onVideoConnecting()
+                    break;
+                case .onVideoSeek:
+                    observer.onVideoSeek(streamSeekUnixTime: (object as? UInt64)!)
+                    break;
+                case .onGatewayConnecting:
+                    observer.onGatewayConnecting()
+                    break
+                case .onGatewayMediaItems:
+                    observer.onGatewayMediaItems(stormMediaItems: (object as? [StormMediaItem])!)
+                    break
             }
         }
     }

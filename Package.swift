@@ -5,6 +5,7 @@ import PackageDescription
 
 let package = Package(
     name: "StormLibrary",
+    defaultLocalization: "en",
     platforms: [
         .iOS(.v13),
         ],
@@ -19,7 +20,8 @@ let package = Package(
     targets: [
         .target(
             name: "StormLibrary",
-            dependencies: ["Starscream"]),
+            dependencies: ["Starscream"]
+        ),
         .testTarget(
             name: "StormLibraryTests",
             dependencies: ["StormLibrary"]),
