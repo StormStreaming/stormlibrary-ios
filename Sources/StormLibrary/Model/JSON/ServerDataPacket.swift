@@ -9,13 +9,13 @@ public struct ServerDataPacket : Decodable{
     
     public struct ServerData : Decodable{
         
-        let serverVersion : String
-        let playerProtocol : Int
-        let serverName : String
+        public let serverVersion : String
+        public let playerProtocol : Int
+        public let serverName : String
         
     }
     
-    let packetType : PacketType
-    let data : ServerData
+    public let packetType : PacketType
+    public let data : ServerData
     
 }

@@ -9,11 +9,11 @@ public struct EventPacket : Decodable{
     
     public struct Event : Decodable{
         
-        let eventName : String
+        public let eventName : String
 
     }
     
-    let packetType : PacketType
-    let data : Event
+    public let packetType : PacketType
+    public let data : Event
     
 }

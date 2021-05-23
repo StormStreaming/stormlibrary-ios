@@ -9,15 +9,15 @@ public struct TimeDataPacket : Decodable{
     
     public struct TimeData : Decodable{
         
-        let sourceDuration : Int
-        let dvrCacheSize : Int
-        let streamDuration : Int
-        let streamStartTime : Int64
-        let sourceStartTime : Int64
+        public let sourceDuration : Int64
+        public let dvrCacheSize : Int64
+        public var streamDuration : Int64
+        public let streamStartTime : Int64
+        public let sourceStartTime : Int64
 
     }
     
-    let packetType : PacketType
-    let data : TimeData
+    public let packetType : PacketType
+    public var data : TimeData
     
 }

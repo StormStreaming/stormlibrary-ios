@@ -7,6 +7,6 @@
 
 public struct PacketTypePacket : Decodable{
     
-    let packetType : PacketType
+    public let packetType : PacketType
     
 }

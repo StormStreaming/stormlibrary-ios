@@ -13,7 +13,7 @@ public protocol StormLibraryObserver: AnyObject {
     func onVideoPlay()
     func onVideoPause()
     func onVideoStop()
-    func onVideoSeek(streamSeekUnixTime : UInt64)
+    func onVideoSeek(streamSeekUnixTime : Int64)
     func onIncompatiblePlayerProtocol()
     func onVideoNotFound()
     
@@ -37,7 +37,7 @@ public extension StormLibraryObserver {
     func onVideoPlay(){}
     func onVideoPause(){}
     func onVideoStop(){}
-    func onVideoSeek(streamSeekUnixTime : UInt64){}
+    func onVideoSeek(streamSeekUnixTime : Int64){}
     func onIncompatiblePlayerProtocol(){}
     func onVideoNotFound(){}
     

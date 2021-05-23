@@ -15,6 +15,10 @@ open class StormLibrary{
     
     public var stormMediaItems : [StormMediaItem] = []
     
+    public var streamStartTime : Int64 = 0
+    public var streamDurationOffset : Int64 = 0
+    public var lastPauseTime : Int64 = 0
+    
     private var stormWebSocket : StormWebSocket!
     private var observations = [ObjectIdentifier : Observation]()
     
@@ -52,9 +56,11 @@ open class StormLibrary{
     }
     
     public func stop(){
+        streamStartTime = 0
+        streamDurationOffset = 0
         stormWebSocket.disconnect()
         avPlayer.replaceCurrentItem(with: nil)
-        dispatchEvent(.onVideoStop)
+        dispatchEvent(.onVideoPause)
         os_log("Stop", log: OSLog.stormLibrary, type: .info)
     }
     
@@ -80,8 +86,13 @@ open class StormLibrary{
  
     }
     
-    public func selectStormMediaItem(stormMediaItem : StormMediaItem, play : Bool = false){
+    public func selectStormMediaItem(stormMediaItem : StormMediaItem, play : Bool = false, resetSeekPosition : Bool = true){
         stormWebSocket.disconnect()
+        
+        if resetSeekPosition{
+            streamStartTime = 0;
+            streamDurationOffset = 0;
+        }
         
         for (_, item) in stormMediaItems.enumerated(){
             if item.isSelected{
@@ -120,7 +131,30 @@ open class StormLibrary{
         avPlayer.replaceCurrentItem(with: playerItem)
     }
     
+    public func seekTo(seekTime : Int64)throws {
+        if(stormWebSocket.isConnected){
+            stormWebSocket.disconnect()
+            streamStartTime = 0
+            streamDurationOffset = 0
+            streamStartTime = seekTime
+            try play()
+            dispatchEvent(.onVideoSeek, object: seekTime)
+        }
+    }
+    
     public func dispatchEvent(_ eventType : EventType, object : Any? = nil){
+        
+        switch eventType {
+            case .onVideoPlay:
+                setStreamDurationOffset()
+                break
+            case .onVideoPause:
+                setStreamDurationOffset()
+                break
+            default:
+                break
+        }
+        
         for (id, observation) in observations {
             
             guard let observer = observation.observer else {
@@ -169,12 +203,12 @@ open class StormLibrary{
                     break
                 case .onVideoConnectionError:
                     observer.onVideoConnectionError(error: (object as? Error)!)
-                break;
+                    break;
                 case .onVideoConnecting:
                     observer.onVideoConnecting()
                     break;
                 case .onVideoSeek:
-                    observer.onVideoSeek(streamSeekUnixTime: (object as? UInt64)!)
+                    observer.onVideoSeek(streamSeekUnixTime: (object as? Int64)!)
                     break;
                 case .onGatewayConnecting:
                     observer.onGatewayConnecting()
@@ -200,5 +234,15 @@ open class StormLibrary{
         weak var observer: StormLibraryObserver?
     }
     
+    public func setStreamDurationOffset(){
+        if !isPlaying(){
+            lastPauseTime = Int64(Date().timeIntervalSince1970 * 1000)
+        }else{
+            if lastPauseTime != 0{
+                streamDurationOffset += Int64(Date().timeIntervalSince1970 * 1000) - lastPauseTime
+            }
+            lastPauseTime = 0
+        }
+    }
     
 }

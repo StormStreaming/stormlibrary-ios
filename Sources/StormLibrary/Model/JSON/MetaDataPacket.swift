@@ -9,21 +9,21 @@ public struct MetaDataPacket : Decodable{
     
     public struct MetaData : Decodable{
         
-        let videoWidth : Int
-        let videoTimeScale : Int
-        let audioChannels : Int
-        let audioDataRate : Int
-        let variableFPS : Bool
-        let nominalFPS : Float
-        let audioCodec : String
-        let encoder : String
-        let audioSampleRate : Int
-        let audioSampleSize : Int
-        let videoHeight : Int
-        let videoCodec : String
+        public let videoWidth : Int
+        public let videoTimeScale : Int
+        public let audioChannels : Int
+        public let audioDataRate : Int
+        public let variableFPS : Bool
+        public let nominalFPS : Float
+        public let audioCodec : String
+        public let encoder : String
+        public let audioSampleRate : Int
+        public let audioSampleSize : Int
+        public let videoHeight : Int
+        public let videoCodec : String
     }
     
-    let packetType : PacketType
-    let data : MetaData
+    public let packetType : PacketType
+    public let data : MetaData
     
 }

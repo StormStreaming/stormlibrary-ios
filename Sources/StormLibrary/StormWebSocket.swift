@@ -27,7 +27,11 @@ public class StormWebSocket: WebSocketDelegate{
         self.playAfterConnect = playAfterConnect
         disconnect()
 
-        var request = URLRequest(url: URL(string: "wss://stormdev.web-anatomy.com:443/storm/stream/?url=rtmp%3A%2F%2Fstormdev.web-anatomy.com%3A1935%2Flive&stream=test_hd&")!) //https://localhost:8080
+        
+        /*
+         url += "seekStart="+this.stormLibrary.getStreamStartTime()+"&";
+         */
+        var request = URLRequest(url: URL(string: "wss://stormdev.web-anatomy.com:443/storm/stream/?url=rtmp%3A%2F%2Fstormdev.web-anatomy.com%3A1935%2Flive&stream=test_hd&seekStart=\(stormLibrary.streamStartTime)&")!) //https://localhost:8080
         
         stormLibrary.dispatchEvent(.onVideoConnecting)
         request.timeoutInterval = 5
@@ -105,7 +109,7 @@ public class StormWebSocket: WebSocketDelegate{
                     }
                     break;
                 case .streamStatus:
-                    let streamStatusPacket = try! JSONDecoder().decode(StreamStatusPacket.self, from: jsonData)
+                    //let streamStatusPacket = try! JSONDecoder().decode(StreamStatusPacket.self, from: jsonData)
                 
                     
                     break;
@@ -114,10 +118,14 @@ public class StormWebSocket: WebSocketDelegate{
                     
                     stormLibrary.dispatchEvent(.onVideoMetaData, object: metaDataPacket.data)
                 
-                    print(metaDataPacket.data.audioChannels)
                 case .timeData:
-                    let timeDataPacket = try! JSONDecoder().decode(TimeDataPacket.self, from: jsonData)
+                    var timeDataPacket = try! JSONDecoder().decode(TimeDataPacket.self, from: jsonData)
+                    
+                    let realTimeOffset = stormLibrary.lastPauseTime != 0 ? Int64(Date().timeIntervalSince1970 * 1000)-stormLibrary.lastPauseTime : 0
+                    
+                    timeDataPacket.data.streamDuration = timeDataPacket.data.streamDuration - realTimeOffset
                 
+                    stormLibrary.streamStartTime = timeDataPacket.data.streamStartTime + timeDataPacket.data.streamDuration
                     stormLibrary.dispatchEvent(.onVideoProgress, object: timeDataPacket.data)
                 case .event:
                     let eventPacket = try! JSONDecoder().decode(EventPacket.self, from: jsonData)
