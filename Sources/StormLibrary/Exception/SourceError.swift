@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-enum SourceError : Error{
+public enum SourceError : Error{
     
     case sourceNotSelectedError(String)
     case sourceListIsEmptyError(String)

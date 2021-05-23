@@ -19,18 +19,34 @@ open class StormLibrary{
     public var streamDurationOffset : Int64 = 0
     public var lastPauseTime : Int64 = 0
     
+    private var stormGateway : StormGateway?
     private var stormWebSocket : StormWebSocket!
     private var observations = [ObjectIdentifier : Observation]()
     
-    //private let avPlayer : AVPlayer = AVPlayer(url: URL(string: "https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8")!)
-    
     private let avPlayer : AVPlayer = AVPlayer()
 
-    public init(stormMediaItems : [StormMediaItem]) {
+    public init(){
         self.stormWebSocket = StormWebSocket(stormLibrary: self)
+    }
+    
+    public convenience init(stormMediaItems : [StormMediaItem]) {
+        self.init()
         for(_, item) in stormMediaItems.enumerated(){
             addStormMediaItem(stormMediaItem: item)
         }
+    }
+    
+    public convenience init(groupName : String, stormGatewayServers : [StormGatewayServer], autoplay : Bool) {
+        self.init()
+        connectToGateway(groupName: groupName, stormGatewayServers: stormGatewayServers, autoplay: autoplay)
+    }
+    
+    public func connectToGateway(groupName : String, stormGatewayServers : [StormGatewayServer], autoplay : Bool){
+        if stormGateway == nil{
+            stormGateway = StormGateway(stormLibrary: self)
+        }
+
+        stormGateway!.connect(groupName: groupName, stormGatewayServers: stormGatewayServers, autoplay: autoplay)
     }
     
     public func play() throws{
@@ -86,6 +102,14 @@ open class StormLibrary{
  
     }
     
+    public func clearStormMediaItems(){
+        
+        for (_, item) in stormMediaItems.enumerated(){
+            removeStormMediaItem(stormMediaItem: item)
+        }
+        
+    }
+    
     public func selectStormMediaItem(stormMediaItem : StormMediaItem, play : Bool = false, resetSeekPosition : Bool = true){
         stormWebSocket.disconnect()
         
@@ -102,6 +126,10 @@ open class StormLibrary{
         stormMediaItem.isSelected = true
         dispatchEvent(.onStormMediaItemSelect, object: stormMediaItem)
         os_log("Select StormMediaItem: %@", log: OSLog.stormLibrary, type: .info, stormMediaItem.description)
+        
+        if !play{
+            pause()
+        }
         
         stormWebSocket.connect(stormMediaItem: stormMediaItem, playAfterConnect: play)
     }
@@ -139,6 +167,7 @@ open class StormLibrary{
             streamStartTime = seekTime
             try play()
             dispatchEvent(.onVideoSeek, object: seekTime)
+            os_log("SeekTo: %@", log: OSLog.stormLibrary, type: .info, String(seekTime))
         }
     }
     
@@ -199,7 +228,7 @@ open class StormLibrary{
                     observer.onGatewayGroupNameNotFound()
                     break
                 case .onGatewayConnectionError:
-                    observer.onGatewayConnectionError()
+                    observer.onGatewayConnectionError(error: (object as? GatewayError)!)
                     break
                 case .onVideoConnectionError:
                     observer.onVideoConnectionError(error: (object as? Error)!)
@@ -216,6 +245,7 @@ open class StormLibrary{
                 case .onGatewayMediaItems:
                     observer.onGatewayMediaItems(stormMediaItems: (object as? [StormMediaItem])!)
                     break
+                    
             }
         }
     }

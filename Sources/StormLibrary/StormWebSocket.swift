@@ -9,7 +9,7 @@ import SwiftUI
 import Starscream
 import os.log
 
-public class StormWebSocket: WebSocketDelegate{
+public class StormWebSocket : WebSocketDelegate{
     
     public var isConnected : Bool = false
     public var socket : WebSocket!
@@ -51,6 +51,8 @@ public class StormWebSocket: WebSocketDelegate{
             os_log("WebSocket is connected", log: OSLog.stormLibrary, type: .info)
             
             stormLibrary.setURLToAvPlayer(urlString: "https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8")
+            
+            
             if playAfterConnect{
                 do{
                     try stormLibrary.play()
@@ -83,9 +85,9 @@ public class StormWebSocket: WebSocketDelegate{
             stormMediaItem.isConnectedToWebSocket = false
             os_log("WebSocket disconnected: cancelled", log: OSLog.stormLibrary, type: .info)
         case .error(let error):
+            handleError(error)
             isConnected = false
             stormMediaItem.isConnectedToWebSocket = false
-            handleError(error)
         }
     }
     
@@ -99,7 +101,7 @@ public class StormWebSocket: WebSocketDelegate{
         
             switch packetTypePacket.packetType{
                 case .serverData:
-                    let serverDataPacket = try! JSONDecoder().decode(ServerDataPacket.self, from: jsonData)
+                    let serverDataPacket = try JSONDecoder().decode(ServerDataPacket.self, from: jsonData)
                     
                     os_log("Storm Server: %@ | Version: %@ | PlayerProtocolVersion: %@ | ServerProtocolVersion: %@", log: OSLog.stormLibrary, type: .info, serverDataPacket.data.serverName,
                            serverDataPacket.data.serverVersion, String(StormLibrary.PLAYER_PROTOCOL_VERSION), String(serverDataPacket.data.playerProtocol))
@@ -114,12 +116,12 @@ public class StormWebSocket: WebSocketDelegate{
                     
                     break;
                 case .metaData:
-                    let metaDataPacket = try! JSONDecoder().decode(MetaDataPacket.self, from: jsonData)
+                    let metaDataPacket = try JSONDecoder().decode(MetaDataPacket.self, from: jsonData)
                     
                     stormLibrary.dispatchEvent(.onVideoMetaData, object: metaDataPacket.data)
                 
                 case .timeData:
-                    var timeDataPacket = try! JSONDecoder().decode(TimeDataPacket.self, from: jsonData)
+                    var timeDataPacket = try JSONDecoder().decode(TimeDataPacket.self, from: jsonData)
                     
                     let realTimeOffset = stormLibrary.lastPauseTime != 0 ? Int64(Date().timeIntervalSince1970 * 1000)-stormLibrary.lastPauseTime : 0
                     
@@ -153,6 +155,9 @@ public class StormWebSocket: WebSocketDelegate{
     }
     
     private func handleError(_ error: Error?) {
+        if !isConnected{
+            return
+        }
         stormLibrary.dispatchEvent(.onVideoConnectionError, object: error)
         stormMediaItem.isConnectedToWebSocket = false
             if let e = error as? WSError {
@@ -165,11 +170,13 @@ public class StormWebSocket: WebSocketDelegate{
         }
     
     public func disconnect(){
+        isConnected = false
         if socket != nil{
             socket.disconnect()
             stormMediaItem.isConnectedToWebSocket = false
             os_log("WebSocket disconnected", log: OSLog.stormLibrary, type: .info)
         }
+        
     }
     
 }

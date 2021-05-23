@@ -41,7 +41,7 @@ public class StormMediaItem : CustomStringConvertible{
     }
     
     public var description: String {
-        return "[host: \(host), port: \(port), isSSL: \(isSSL), streamName: \(streamName), applicationName: \(applicationName), label: \(label), rtmpHost: \(String(describing: rtmpHost)), rtmpApplicationName: \(String(describing:rtmpApplicationName)), isSelected: \(isSelected), isConnectedToWebSocket: \(isConnectedToWebSocket)]"
+        return "[host: \(host), port: \(port), isSSL: \(isSSL), streamName: \(streamName), applicationName: \(applicationName), label: \(label), rtmpHost: \(String(describing: rtmpHost)), rtmpApplicationName: \(String(describing:rtmpApplicationName)), isSelected: \(isSelected), isConnectedToWebSocket: \(isConnectedToWebSocket)"
         
     }
     
