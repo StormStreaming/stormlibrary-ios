@@ -104,6 +104,7 @@ public class StormWebSocket : WebSocketDelegate{
                     
                     os_log("Storm Server: %@ | Version: %@ | PlayerProtocolVersion: %@ | ServerProtocolVersion: %@", log: OSLog.stormLibrary, type: .info, serverDataPacket.data.serverName,
                            serverDataPacket.data.serverVersion, String(StormLibrary.PLAYER_PROTOCOL_VERSION), String(serverDataPacket.data.playerProtocol))
+                
                     
                     if serverDataPacket.data.playerProtocol != StormLibrary.PLAYER_PROTOCOL_VERSION{
                         stormLibrary.dispatchEvent(.onIncompatiblePlayerProtocol)

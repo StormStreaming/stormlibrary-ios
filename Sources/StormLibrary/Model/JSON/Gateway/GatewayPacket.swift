@@ -11,13 +11,11 @@ public struct GatewayPacket : Decodable{
     public struct Server : Decodable{
         
         public let host : String
-        public let application : String
         public let port : Int
         public let isSSL : Bool
         
         enum CodingKeys: String, CodingKey {
             case host = "host"
-            case application = "application"
             case port = "port"
             case isSSL = "ssl"
         }
@@ -26,7 +24,8 @@ public struct GatewayPacket : Decodable{
     public struct Source : Decodable{
         
         public let protocolName : String
-        public let host : String
+        public let rtmpHost : String
+        public let rtmpApplication : String
         public let application : String
         public let streamName : String
         public let streamInfo : StreamInfo
@@ -34,8 +33,9 @@ public struct GatewayPacket : Decodable{
         
         enum CodingKeys: String, CodingKey {
             case protocolName = "protocol"
-            case host = "host"
+            case rtmpHost = "rtmpHost"
             case application = "application"
+            case rtmpApplication = "rtmpApplication"
             case streamName = "streamName"
             case streamInfo = "streamInfo"
             case isDefault = "isDefault"

@@ -108,12 +108,8 @@ public class StormGateway : WebSocketDelegate{
     }
     
     private func parseMessage(message : String){
-        
-        let message2 = "{\"status\":\"success\",\"stream\":{\"serverList\":[{\"host\":\"stormdev.web-anatomy.com\",\"application\":\"live\",\"port\":443,\"ssl\":true}],\"sourceList\":[{\"protocol\":\"rtmp\", \"host\":\"stormdev.web-anatomy.com\", \"application\":\"live\",\"streamName\":\"test_lq\",\"application\":\"live\",\"streamInfo\":{\"label\":\"360p\",\"width\":640,\"height\":360,\"fps\":30,\"bitrate\":2500}},{\"protocol\":\"rtmp\", \"host\":\"stormdev.web-anatomy.com\", \"application\":\"live\", \"streamName\":\"test_sd\",\"application\":\"live\",\"isDefault\":true,\"streamInfo\":{\"label\":\"720p\",\"width\":1280,\"height\":720,\"fps\":30,\"bitrate\":5000}},{\"protocol\":\"rtmp\",\"host\":\"stormdev.web-anatomy.com\", \"application\":\"live\",\"streamName\":\"test_hd\",\"application\":\"live\",\"streamInfo\":{\"label\":\"1080p\",\"width\":1920,\"height\":1080,\"fps\":30,\"bitrate\":7000}}]}}"
-  
-        
-        
-        let jsonData = message2.data(using: .utf8)!
+         
+        let jsonData = message.data(using: .utf8)!
         do{
             let gatewayPacket = try JSONDecoder().decode(GatewayPacket.self, from: jsonData)
             
@@ -126,7 +122,7 @@ public class StormGateway : WebSocketDelegate{
                     var stormMediaItem : StormMediaItem?
                  
                     if source.protocolName == "rtmp"{
-                        stormMediaItem = StormMediaItem(host: gatewayPacket.stream.serverList[0].host, port: gatewayPacket.stream.serverList[0].port, isSSL: gatewayPacket.stream.serverList[0].isSSL, applicationName: source.application, streamName: source.streamName, label: source.streamInfo.label, rtmpHost: source.host, rtmpApplicationName: source.application, isSelected: source.isDefault != nil ? source.isDefault! : false)
+                        stormMediaItem = StormMediaItem(host: gatewayPacket.stream.serverList[0].host, port: gatewayPacket.stream.serverList[0].port, isSSL: gatewayPacket.stream.serverList[0].isSSL, applicationName: source.application, streamName: source.streamName, label: source.streamInfo.label, rtmpHost: source.rtmpHost, rtmpApplicationName: source.rtmpApplication, isSelected: source.isDefault != nil ? source.isDefault! : false)
                     }else{
                         stormMediaItem = StormMediaItem(host: gatewayPacket.stream.serverList[0].host, port: gatewayPacket.stream.serverList[0].port, isSSL: gatewayPacket.stream.serverList[0].isSSL, applicationName: source.application, streamName: source.streamName, label: source.streamInfo.label, isSelected: source.isDefault != nil ? source.isDefault! : false)
                     }

@@ -21,12 +21,15 @@ open class StormLibrary{
     
     private var stormGateway : StormGateway?
     private var stormWebSocket : StormWebSocket!
+    private var avPlayerObserver : AVPlayerObserver!
     private var observations = [ObjectIdentifier : Observation]()
     
     private let avPlayer : AVPlayer = AVPlayer()
-
+   
+    
     public init(){
         self.stormWebSocket = StormWebSocket(stormLibrary: self)
+        self.avPlayerObserver = AVPlayerObserver(stormLibrary: self)
     }
     
     public func connectToGateway(groupName : String, stormGatewayServers : [StormGatewayServer], autoplay : Bool){
@@ -48,14 +51,13 @@ open class StormLibrary{
         }else{
             dispatchEvent(.onStormMediaItemPlay, object: stormMediaItem)
             avPlayer.play()
-            dispatchEvent(.onVideoPlay)
+            
             os_log("Play", log: OSLog.stormLibrary, type: .info)
         }
     }
     
     public func pause(){
         avPlayer.pause()
-        dispatchEvent(.onVideoPause)
         os_log("Pause", log: OSLog.stormLibrary, type: .info)
     }
     
@@ -140,11 +142,16 @@ open class StormLibrary{
     }
     
     public func setURLToAvPlayer(urlString: String){
+        
+
         let url = URL(string: urlString)
         let asset = AVAsset(url: url!)
         let playerItem = AVPlayerItem(asset: asset)
         
         avPlayer.replaceCurrentItem(with: playerItem)
+        
+
+        
     }
     
     public func seekTo(seekTime : Int64)throws {
