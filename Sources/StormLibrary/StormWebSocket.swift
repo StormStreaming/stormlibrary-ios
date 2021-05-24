@@ -27,7 +27,6 @@ public class StormWebSocket : WebSocketDelegate{
         self.playAfterConnect = playAfterConnect
         disconnect()
 
-        
         /*
          url += "seekStart="+this.stormLibrary.getStreamStartTime()+"&";
          */

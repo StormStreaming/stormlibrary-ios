@@ -45,8 +45,8 @@ public class StormGateway : WebSocketDelegate{
         disconnect()
         currentStormGatewayServer = getNextServerToConnect()
         if currentStormGatewayServer == nil{
-            os_log("Gateway WebSocket: Could not connect to any servers on the gateway server list", log: OSLog.stormLibrary, type: .error)
             stormLibrary.dispatchEvent(.onGatewayConnectionError, object: GatewayError.connectionFailed("Gateway WebSocket: Could not connect to any servers on the gateway server list"))
+            os_log("Gateway WebSocket: Could not connect to any servers on the gateway server list", log: OSLog.stormLibrary, type: .error)
             return;
         }
         
@@ -177,7 +177,7 @@ public class StormGateway : WebSocketDelegate{
     }
     
     private func handleError(_ error: Error?) {
-        stormLibrary.dispatchEvent(.onVideoConnectionError, object: error)
+        stormLibrary.dispatchEvent(.onGatewayConnectionError, object: error)
         if let currentGateway = currentStormGatewayServer{
             currentGateway.connectionFailed = true
         }

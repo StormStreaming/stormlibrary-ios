@@ -24,7 +24,7 @@ public protocol StormLibraryObserver: AnyObject {
     
     func onGatewayConnecting()
     func onGatewayGroupNameNotFound()
-    func onGatewayConnectionError(error : GatewayError)
+    func onGatewayConnectionError(error : Error)
     func onGatewayMediaItems(stormMediaItems: [StormMediaItem])
     
 }
@@ -48,7 +48,7 @@ public extension StormLibraryObserver {
     
     func onGatewayConnecting(){}
     func onGatewayGroupNameNotFound(){}
-    func onGatewayConnectionError(error : GatewayError){}
+    func onGatewayConnectionError(error : Error){}
     func onGatewayMediaItems(stormMediaItems: [StormMediaItem]){}
 }
 

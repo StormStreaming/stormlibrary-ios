@@ -29,18 +29,6 @@ open class StormLibrary{
         self.stormWebSocket = StormWebSocket(stormLibrary: self)
     }
     
-    public convenience init(stormMediaItems : [StormMediaItem]) {
-        self.init()
-        for(_, item) in stormMediaItems.enumerated(){
-            addStormMediaItem(stormMediaItem: item)
-        }
-    }
-    
-    public convenience init(groupName : String, stormGatewayServers : [StormGatewayServer], autoplay : Bool) {
-        self.init()
-        connectToGateway(groupName: groupName, stormGatewayServers: stormGatewayServers, autoplay: autoplay)
-    }
-    
     public func connectToGateway(groupName : String, stormGatewayServers : [StormGatewayServer], autoplay : Bool){
         if stormGateway == nil{
             stormGateway = StormGateway(stormLibrary: self)
@@ -128,10 +116,10 @@ open class StormLibrary{
         os_log("Select StormMediaItem: %@", log: OSLog.stormLibrary, type: .info, stormMediaItem.description)
         
         if !play{
-            pause()
+            stop()
+        }else{
+            stormWebSocket.connect(stormMediaItem: stormMediaItem, playAfterConnect: play)
         }
-        
-        stormWebSocket.connect(stormMediaItem: stormMediaItem, playAfterConnect: play)
     }
     
     public func getSelectedStormMediaItem() -> StormMediaItem?{
@@ -228,7 +216,7 @@ open class StormLibrary{
                     observer.onGatewayGroupNameNotFound()
                     break
                 case .onGatewayConnectionError:
-                    observer.onGatewayConnectionError(error: (object as? GatewayError)!)
+                    observer.onGatewayConnectionError(error: (object as? Error)!)
                     break
                 case .onVideoConnectionError:
                     observer.onVideoConnectionError(error: (object as? Error)!)
