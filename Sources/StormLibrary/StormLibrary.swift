@@ -143,7 +143,8 @@ open class StormLibrary{
     
     public func setURLToAvPlayer(urlString: String){
         
-
+        os_log("Connecting to HLS: %@", log: OSLog.stormLibrary, type: .info, urlString)
+        
         let url = URL(string: urlString)
         let asset = AVAsset(url: url!)
         let playerItem = AVPlayerItem(asset: asset)

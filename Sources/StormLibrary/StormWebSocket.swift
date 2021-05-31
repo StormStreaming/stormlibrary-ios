@@ -27,10 +27,10 @@ public class StormWebSocket : WebSocketDelegate{
         self.playAfterConnect = playAfterConnect
         disconnect()
 
-        /*
-         url += "seekStart="+this.stormLibrary.getStreamStartTime()+"&";
-         */
-        var request = URLRequest(url: URL(string: "wss://stormdev.web-anatomy.com:443/storm/stream/?url=rtmp%3A%2F%2Fstormdev.web-anatomy.com%3A1935%2Flive&stream=test_hd&seekStart=\(stormLibrary.streamStartTime)&")!) //https://localhost:8080
+
+        let stringUrl = "\(stormMediaItem.getWebSocketStreamURL())seekStart=\(stormLibrary.streamStartTime)&"
+
+        var request = URLRequest(url: URL(string: stringUrl)!) //https://localhost:8080
         
         stormLibrary.dispatchEvent(.onVideoConnecting)
         request.timeoutInterval = 5
@@ -38,7 +38,7 @@ public class StormWebSocket : WebSocketDelegate{
         socket.delegate = self
         socket.connect()
         
-        os_log("WebSocket is connecting to: %@", log: OSLog.stormLibrary, type: .info, stormMediaItem.getWebSocketURL())
+        os_log("WebSocket is connecting to: %@", log: OSLog.stormLibrary, type: .info, stormMediaItem.getWebSocketStreamURL())
         
     }
     
@@ -49,21 +49,11 @@ public class StormWebSocket : WebSocketDelegate{
             stormMediaItem.isConnectedToWebSocket = true
             os_log("WebSocket is connected", log: OSLog.stormLibrary, type: .info)
             
-            stormLibrary.setURLToAvPlayer(urlString: "https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8")
-            
-            
-            if playAfterConnect{
-                do{
-                    try stormLibrary.play()
-                } catch let error {
-                    os_log("Play error: %@", log: OSLog.stormLibrary, type: .error, String(describing: error))
-                }
-            }
-            
+        
         case .disconnected(let reason, let code):
             isConnected = false
             stormMediaItem.isConnectedToWebSocket = false
-            os_log("WebSocket disconnected: %@ %@", log: OSLog.stormLibrary, type: .info, reason, code)
+            os_log("WebSocket disconnected: %@ %@", log: OSLog.stormLibrary, type: .info, reason, String(code))
         case .text(let string):
             //print("Received text: \(string)")
             parseMessage(message: string)
@@ -109,7 +99,7 @@ public class StormWebSocket : WebSocketDelegate{
                     if serverDataPacket.data.playerProtocol != StormLibrary.PLAYER_PROTOCOL_VERSION{
                         stormLibrary.dispatchEvent(.onIncompatiblePlayerProtocol)
                     }
-                    break;
+                    break
                 case .streamStatus:
                     //let streamStatusPacket = try! JSONDecoder().decode(StreamStatusPacket.self, from: jsonData)
                 
@@ -119,7 +109,7 @@ public class StormWebSocket : WebSocketDelegate{
                     let metaDataPacket = try JSONDecoder().decode(MetaDataPacket.self, from: jsonData)
                     
                     stormLibrary.dispatchEvent(.onVideoMetaData, object: metaDataPacket.data)
-                
+                    break
                 case .timeData:
                     var timeDataPacket = try JSONDecoder().decode(TimeDataPacket.self, from: jsonData)
                     
@@ -129,6 +119,22 @@ public class StormWebSocket : WebSocketDelegate{
                 
                     stormLibrary.streamStartTime = timeDataPacket.data.streamStartTime + timeDataPacket.data.streamDuration
                     stormLibrary.dispatchEvent(.onVideoProgress, object: timeDataPacket.data)
+                    break
+                case .remoteAddress:
+                    
+                    var remoteAddressPacket = try JSONDecoder().decode(RemoteAddressPacket.self, from: jsonData)
+                    
+                    stormLibrary.setURLToAvPlayer(urlString: "\(stormMediaItem!.getWebSocketURL())\(remoteAddressPacket.data.streamURL)")
+                    
+                    
+                    if playAfterConnect{
+                        do{
+                            try stormLibrary.play()
+                        } catch let error {
+                            os_log("Play error: %@", log: OSLog.stormLibrary, type: .error, String(describing: error))
+                        }
+                    }
+                    break
                 case .event:
                     let eventPacket = try! JSONDecoder().decode(EventPacket.self, from: jsonData)
                 
@@ -136,17 +142,17 @@ public class StormWebSocket : WebSocketDelegate{
                         case "StreamNotFound":
                             stormLibrary.dispatchEvent(.onVideoNotFound)
                             disconnect()
-                            break;
+                            break
                         case "StreamUnpublished":
                             stormLibrary.dispatchEvent(.onVideoStop)
                             disconnect()
-                            break;
+                            break
                         case "newVideo":
-                            break;
+                            break
                         default:
-                            break;
+                            break
                     }
-                    break;
+                    break
             }
         
         }catch{

@@ -46,7 +46,14 @@ public class StormMediaItem : CustomStringConvertible{
     }
     
     public func getWebSocketURL() -> String{
-        return "https://asdasd"
+        return "\(isSSL ? "wss" : "ws")://\(host):\(port)/"
+    }
+     
+    public func getWebSocketStreamURL() -> String{
+        if(rtmpHost != nil){
+            return "\(getWebSocketURL())\(applicationName)/\(streamName)/?url=rtmp%3A%2F%2F\(rtmpHost!)%3A1935%2F\(rtmpApplicationName!)%2F\(streamName)&splitStream=1&"
+        }
+        return "\(getWebSocketURL())\(applicationName)/\(streamName)?splitStream=1&"
     }
     
     

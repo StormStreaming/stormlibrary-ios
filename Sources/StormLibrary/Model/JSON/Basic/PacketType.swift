@@ -7,5 +7,5 @@
 
 public enum PacketType : String, Decodable{
 
-    case serverData, streamStatus, metaData, timeData, event
+    case serverData, streamStatus, metaData, timeData, event, remoteAddress
 }
