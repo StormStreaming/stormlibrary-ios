@@ -75,7 +75,7 @@ public class StormGateway : WebSocketDelegate{
             if let currentGateway = currentStormGatewayServer{
                 currentGateway.connectionFailed = true
             }
-            os_log("Gateway WebSocket disconnected: %@ %@", log: OSLog.stormLibrary, type: .info, reason, code)
+            os_log("Gateway WebSocket disconnected: %@ %@", log: OSLog.stormLibrary, type: .info, reason, String(code))
         case .text(let string):
             //print("Received text: \(string)")
             parseMessage(message: string)
